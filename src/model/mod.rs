@@ -16,9 +16,7 @@
 // You should have received a copy of the BSD 2-Clause License along with the software.
 // If not, see < https://opensource.org/licenses/BSD-2-Clause>.
 
-use std::fs::File;
 use std::io;
-use std::io::BufReader;
 
 use crate::classifier::{Classifier, ClassifierKind, LabBoostedClassifier, SurfMlpClassifier};
 use byteorder::{LittleEndian, ReadBytesExt};
@@ -56,12 +54,6 @@ impl Model {
     pub fn get_hierarchy_size(&self, hierarchy_index: usize) -> i32 {
         self.hierarchy_sizes[hierarchy_index]
     }
-}
-
-/// Load model from a file.
-#[inline]
-pub fn load_model(path: &str) -> Result<Model, io::Error> {
-    read_model(BufReader::new(File::open(path)?))
 }
 
 /// Load model from any stream or buffer

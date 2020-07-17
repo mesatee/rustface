@@ -26,20 +26,39 @@ pub mod model;
 pub use crate::common::FaceInfo;
 pub use crate::common::ImageData;
 pub use crate::common::Rectangle;
-pub use crate::model::{load_model, read_model, Model};
+pub use crate::model::{read_model, Model};
 
 use crate::detector::FuStDetector;
+use image::DynamicImage;
 use std::io;
 
-/// Create a face detector, based on a file with model description.
-pub fn create_detector(path_to_model: &str) -> Result<Box<dyn Detector>, io::Error> {
-    let model = load_model(path_to_model)?;
+#[cfg(feature = "include_default_model")]
+/// Create a face detector with the default model file
+pub fn create_default_detector() -> Result<Box<dyn Detector>, io::Error> {
+    let bytes = include_bytes!("../model/seeta_fd_frontal_v1.0.bin");
+    create_detector(bytes)
+}
+
+/// Create a face detector from model loaded to memory
+pub fn create_detector(buf: &[u8]) -> Result<Box<dyn Detector>, io::Error> {
+    let cursor = io::Cursor::new(buf.to_owned());
+    let model = read_model(cursor)?;
     Ok(create_detector_with_model(model))
 }
 
 /// Create a face detector, based on the provided model.
 pub fn create_detector_with_model(model: Model) -> Box<dyn Detector> {
     Box::new(FuStDetector::new(model))
+}
+
+/// detect face bounding boxes
+pub fn detect_faces(detector: &mut dyn Detector, img: DynamicImage) -> Vec<FaceInfo> {
+    let gray = &img.to_luma8();
+    let (width, height) = gray.dimensions();
+    let mut image = ImageData::new(gray, width, height);
+
+    let faces = detector.detect(&mut image);
+    faces
 }
 
 pub trait Detector {
